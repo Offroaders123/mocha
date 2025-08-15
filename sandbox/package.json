@@ -1,0 +1,9 @@
+{
+    "scripts": {
+        "test": "mocha --no-config --timeout 100",
+        "debug": "node ../bin/mocha --no-config --timeout 100"
+    },
+    "dependencies": {
+        "mocha": "11.7.1"
+    }
+}
