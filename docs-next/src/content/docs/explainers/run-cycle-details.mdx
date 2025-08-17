@@ -35,7 +35,7 @@ cli.js does more parsing and then goes to lib/cli/run.js via `yargs().command(co
 ## watch-run.js
 
 1. `watch-run.js` exports the `watchRun` function
-1. `watchRun` returns a call to `createWatcher`
+1. `watchRun` returns a call to `createWatcher(newMocha, options)`, where `options.beforeRun` includes a setup function that actually collects the tests
 1. `createWatcher` watches all files iff there was no `watchFiles` arg passed in
 1. `createWatcher` creates a `watcher` object
    - Implementation varies, see below
@@ -54,7 +54,9 @@ cli.js does more parsing and then goes to lib/cli/run.js via `yargs().command(co
    1. `_runGlobalFixtures` loops through each fixture function defined in `options.globalSetup` (ref https://mochajs.org/next/features/global-fixtures/#global-setup-fixtures)
    1. `runGlobalSetup` returns the updated context object, which the on-ready handler saves to ensure it doesn't call `runGlobalSetup` twice
 1. On-ready handler calls `rerunner.run()`
-1. `run` calls `options.beforeRun({mocha, watcher})` if `beforeRun` exists
+1. `run` calls `options.beforeRun({mocha, watcher})`
+1. `beforeRun` does some cleanup and setup <!-- todo -->
+1. `beforeRun` calls `lib/cli/collect-files.js#collectFiles` which gathers all the test files to run (see below)
 1. `run` calls `mocha.run(() => ...)` (`Mocha.prototype.run`) with an anonymous done-callback
 
 ### Mocha 11.2.1 (Chokidar 3, b88d441c/4804aba)
@@ -229,15 +231,29 @@ Control flow:
 1. `createPathMatcher().ignore` resolve the path then checks a cache
 1. If cache fails, ...(todo)...
 
+## lib/cli/collect-files.js
+
+`collectFiles` is `lib/cli/watch-run.js`'s name for the default export of this file
+
+1. `collectFiles` calls `lib/cli/lookup-files.js#lookupFiles` to get the list of file paths
+1. `collectFiles` turns the paths into absolute paths and makes sure they all exist
+1. `collectFiles` conditionally sorts, then inserts `fileArgs`
+1. `collectFiles` prints errors if no files are found and warnings if files are unmatched
+1. `collectFiles` returns the matched and unmatched file paths
+
 ## lib/mocha.js
 
-1. Top-level calls `require('./interfaces')` which includes `lib/interfaces/exports.js` (see `EVENT_FILE_REQUIRE`, {/* todo confirm with debug */})
+1. Top-level calls `require('./interfaces')` which includes `lib/interfaces/exports.js` (see `EVENT_FILE_REQUIRE`)
 1. `run` calls `_guardRunningStateTransition` to ensure a new test run is valid
 1. `run` sets state to `running`
 1. If previous runner exists, `run` disposes it and resets the suite
-1. If there are files and it's not set to lazy load, it eagerly loads files with `loadFiles`
+1. If there are files and it's not set to lazy load, it eagerly loads files with `Mocha.prototype.loadFiles`
+   - When watching, we don't lazy load, so this does get executed
    - This emits the `EVENT_FILE_PRE_REQUIRE`, `EVENT_FILE_REQUIRE`, and `EVENT_FILE_POST_REQUIRE` events
    - `EVENT_FILE_REQUIRE` has a listener defined in lib/interfaces/exports.js to populate the Suite and Test objects via `visit`
+      - This doesn't execute in our scenario though, it's for a different scenario
+   - When lazy loading files are populated via `Mocha.prototype.loadFilesAsync`
+1. `loadFiles` <!-- todo -->
 1. `run` calls `_runnerClass`, which is either
    - a lib/nodejs/parallel-buffered-runner.js `ParallelBufferedRunner` or
    - a lib/runner.js `Runner`
