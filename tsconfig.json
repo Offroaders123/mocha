@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "allowJs": true,
+    "checkJs": true,
     "module": "Node16",
     "resolveJsonModule": true,
     "target": "ES2022",
