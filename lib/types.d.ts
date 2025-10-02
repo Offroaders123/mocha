@@ -323,7 +323,7 @@ export interface PluginLoaderOptions {
   /**
    * Plugin definitions
    */
-  pluginDefs?: PluginDefinition;
+  pluginDefs?: PluginDefinition[];
 
   /**
    * A list of plugins to ignore when loading
