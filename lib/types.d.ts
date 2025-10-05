@@ -310,20 +310,20 @@ export interface StatsCollector {
   failures: number;
 
   /** time when testing began */
-  start?: Date;
+  start: Date;
 
   /** time when testing concluded */
-  end?: Date;
+  end: Date;
 
   /** number of msecs that testing took */
-  duration?: number;
+  duration: number;
 }
 
 export interface PluginLoaderOptions {
   /**
    * Plugin definitions
    */
-  pluginDefs?: PluginDefinition[];
+  pluginDefs?: PluginDefinition;
 
   /**
    * A list of plugins to ignore when loading
